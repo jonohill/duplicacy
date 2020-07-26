@@ -171,7 +171,7 @@ func setEntryContent(entries []*Entry, chunkLengths []int, offset int) {
 // unmodified files with last backup).  Otherwise (or if this is the first backup), the entire repository will
 // be scanned to create the snapshot.  'tag' is the tag assigned to the new snapshot.
 func (manager *BackupManager) Backup(top string, quickMode bool, threads int, tag string,
-	showStatistics bool, shadowCopy bool, shadowCopyTimeout int, enumOnly bool, forcedTime int) bool {
+	showStatistics bool, shadowCopy bool, shadowCopyTimeout int, enumOnly bool, snapshotStartTime int64) bool {
 
 	var err error
 	top, err = filepath.Abs(top)
@@ -200,8 +200,12 @@ func (manager *BackupManager) Backup(top string, quickMode bool, threads int, ta
 	defer DeleteShadowCopy()
 
 	LOG_INFO("BACKUP_INDEXING", "Indexing %s", top)
+	if snapshotStartTime <= 0 {
+		snapshotStartTime = time.Now().Unix()
+	}
 	localSnapshot, skippedDirectories, skippedFiles, err := CreateSnapshotFromDirectory(manager.snapshotID, shadowTop,
-		                                                                                manager.nobackupFile, manager.filtersFile)
+																						manager.nobackupFile, manager.filtersFile,
+																						snapshotStartTime)
 	if err != nil {
 		LOG_ERROR("SNAPSHOT_LIST", "Failed to list the directory %s: %v", top, err)
 		return false
@@ -602,11 +606,7 @@ func (manager *BackupManager) Backup(top string, quickMode bool, threads int, ta
 
 	localSnapshotReady = true
 
-	if forcedTime > 0 {
-		localSnapshot.EndTime = int64(forcedTime)
-	} else {
-		localSnapshot.EndTime = time.Now().Unix()
-	}
+	localSnapshot.EndTime = snapshotStartTime + (time.Now().Unix() - startTime)
 
 	err = manager.SnapshotManager.CheckSnapshot(localSnapshot)
 	if err != nil {
@@ -788,7 +788,7 @@ func (manager *BackupManager) Restore(top string, revision int, inPlace bool, qu
 	manager.SnapshotManager.DownloadSnapshotContents(remoteSnapshot, patterns, true)
 
 	localSnapshot, _, _, err := CreateSnapshotFromDirectory(manager.snapshotID, top, manager.nobackupFile,
-		                                                    manager.filtersFile)
+		                                                    manager.filtersFile, time.Now().Unix())
 	if err != nil {
 		LOG_ERROR("SNAPSHOT_LIST", "Failed to list the repository: %v", err)
 		return false
