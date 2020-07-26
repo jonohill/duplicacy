@@ -1467,9 +1467,10 @@ func main() {
 					Usage: "enumerate the repository recursively and then exit",
 				},
 				cli.IntFlag{
-					Name:	"forced-time",
-					Value:	0,
-					Usage:	"save snapshot as if it was created at this Unix time",
+					Name:	  "forced-time",
+					Value:	  0,
+					Usage:	  "save snapshot as if it was created at this Unix time",
+					Argument: "<unix time>",
 				},
 			},
 			Usage:     "Save a snapshot of the repository to the storage",
