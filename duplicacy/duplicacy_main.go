@@ -24,7 +24,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/gilbertchen/duplicacy/src"
+	"github.com/jonohill/duplicacy/src"
 )
 
 const (
@@ -737,6 +737,13 @@ func backupRepository(context *cli.Context) {
 		quickMode = false
 	}
 
+	forcedTime := context.Int("forced-time")
+	if forcedTime < 0 {
+		fmt.Fprintf(context.App.Writer, "forced-time must be a valid Unix timestamp.\n\n")
+		cli.ShowCommandHelp(context, context.Command.Name)
+		os.Exit(ArgumentExitCode)		
+	}
+
 	showStatistics := context.Bool("stats")
 
 	enableVSS := context.Bool("vss")
@@ -751,7 +758,7 @@ func backupRepository(context *cli.Context) {
 
 	backupManager.SetupSnapshotCache(preference.Name)
 	backupManager.SetDryRun(dryRun)
-	backupManager.Backup(repository, quickMode, threads, context.String("t"), showStatistics, enableVSS, vssTimeout, enumOnly)
+	backupManager.Backup(repository, quickMode, threads, context.String("t"), showStatistics, enableVSS, vssTimeout, enumOnly, forcedTime)
 
 	runScript(context, preference.Name, "post")
 }
@@ -1459,6 +1466,11 @@ func main() {
 					Name:  "enum-only",
 					Usage: "enumerate the repository recursively and then exit",
 				},
+				cli.IntFlag{
+					Name:	"forced-time",
+					Value:	0,
+					Usage:	"save snapshot as if it was created at this Unix time"
+				}
 			},
 			Usage:     "Save a snapshot of the repository to the storage",
 			ArgsUsage: " ",

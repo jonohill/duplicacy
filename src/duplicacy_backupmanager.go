@@ -171,7 +171,7 @@ func setEntryContent(entries []*Entry, chunkLengths []int, offset int) {
 // unmodified files with last backup).  Otherwise (or if this is the first backup), the entire repository will
 // be scanned to create the snapshot.  'tag' is the tag assigned to the new snapshot.
 func (manager *BackupManager) Backup(top string, quickMode bool, threads int, tag string,
-	showStatistics bool, shadowCopy bool, shadowCopyTimeout int, enumOnly bool) bool {
+	showStatistics bool, shadowCopy bool, shadowCopyTimeout int, enumOnly bool, forcedTime int) bool {
 
 	var err error
 	top, err = filepath.Abs(top)
@@ -602,7 +602,11 @@ func (manager *BackupManager) Backup(top string, quickMode bool, threads int, ta
 
 	localSnapshotReady = true
 
-	localSnapshot.EndTime = time.Now().Unix()
+	if forcedTime > 0 {
+		localSnapshot.EndTime = forcedTime
+	} else {
+		localSnapshot.EndTime = time.Now().Unix()
+	}
 
 	err = manager.SnapshotManager.CheckSnapshot(localSnapshot)
 	if err != nil {
