@@ -603,7 +603,7 @@ func (manager *BackupManager) Backup(top string, quickMode bool, threads int, ta
 	localSnapshotReady = true
 
 	if forcedTime > 0 {
-		localSnapshot.EndTime = forcedTime
+		localSnapshot.EndTime = int64(forcedTime)
 	} else {
 		localSnapshot.EndTime = time.Now().Unix()
 	}
